@@ -17,6 +17,7 @@
 - Move-to-`Completed/` could theoretically re-trigger the watcher → `_schedule` now processes only direct children of the root folder *(fixed: 2026-08-10)*
 - Broken `torchcodec` audio decoder (lib mismatches, needs CUDA `libnvrtc`) → bypassed entirely: audio decoded to a 16 kHz mono waveform via PyAV and fed to the pyannote pipeline as `{'waveform', 'sample_rate'}` *(fixed: 2026-08-10)*
 - pyannote API drift (`Pipeline.from_pretrained(use_auth_token=)` → `token=`; output is now `DiarizeOutput` with `.speaker_diarization`, no longer the bare `Annotation`) → fixed both with a `getattr` compatibility fallback *(fixed: 2026-08-10)*
+- pyannote **auto mode undercounts speakers** on recordings where one voice dominates: a real 2-person Arabic video (81/19 speech split) came back as 1 speaker. Fix: when auto returns a single speaker on a clip with ≥10s of speech, probe `num_speakers=2` and accept the split only if the minority voice holds ≥10% of speech time AND ≥4s (guards against over-splitting monologues). Same-person persona recordings still correctly stay 1 speaker. *(fixed: 2026-08-10)*
 
 ---
 

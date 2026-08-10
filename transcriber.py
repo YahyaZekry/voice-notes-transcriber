@@ -41,6 +41,9 @@ NOTIFY_ENABLED = os.environ.get("TRANSCRIBER_NOTIFY", "1") != "0"
 DIARIZE = os.environ.get("TRANSCRIBER_DIARIZE", "1") != "0"
 SPEAKERS = os.environ.get("TRANSCRIBER_SPEAKERS", "")
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
+MIN_PROBE_SPEECH = 10.0   # total speech (s) below which we never probe for a 2nd speaker
+PROBE_MIN_FRACTION = 0.10  # probed 2nd speaker must hold >= this share of speech time
+PROBE_MIN_SECONDS = 4.0    # ... and at least this many seconds of speech
 
 log = logging.getLogger("voice-transcriber")
 
@@ -123,7 +126,10 @@ class Transcriber:
         if DIARIZE and text:
             num_speakers = int(SPEAKERS) if SPEAKERS.isdigit() else None
             try:
-                turns = self._diarize(path, num_speakers=num_speakers)
+                if num_speakers:
+                    turns = self._diarize(path, num_speakers=num_speakers)
+                else:
+                    turns = self._diarize_auto(path)
                 distinct = {t[2] for t in turns}
                 if len(distinct) > 1:
                     labeled, speakers = self._diarize_text(seg_list, turns)
@@ -138,6 +144,29 @@ class Transcriber:
     ) -> list[tuple[float, float, str]]:
         pipeline = self._get_diarization()
         waveform = self._load_waveform(path)
+        return self._diarize_turns(pipeline, waveform, num_speakers)
+
+    def _diarize_auto(
+        self, path: Path
+    ) -> list[tuple[float, float, str]]:
+        pipeline = self._get_diarization()
+        waveform = self._load_waveform(path)
+        turns = self._diarize_turns(pipeline, waveform)
+        speech = sum(t[1] - t[0] for t in turns)
+        if len({t[2] for t in turns}) <= 1 and speech >= MIN_PROBE_SPEECH:
+            probe = self._diarize_turns(pipeline, waveform, 2)
+            labels: dict[str, float] = {}
+            for start, end, spk in probe:
+                labels[spk] = labels.get(spk, 0.0) + (end - start)
+            if len(labels) == 2:
+                minority = min(labels.values())
+                if minority >= PROBE_MIN_FRACTION * sum(labels.values()) and minority >= PROBE_MIN_SECONDS:
+                    return probe
+        return turns
+
+    def _diarize_turns(
+        self, pipeline, waveform, num_speakers: int | None = None
+    ) -> list[tuple[float, float, str]]:
         kwargs = {"num_speakers": num_speakers} if num_speakers else {}
         output = pipeline(
             {"waveform": waveform.unsqueeze(0), "sample_rate": 16000},
