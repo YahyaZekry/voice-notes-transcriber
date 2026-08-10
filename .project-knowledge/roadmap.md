@@ -18,8 +18,9 @@ In production. Validate accuracy with real Arabic + English voice notes (the esp
 ## Active TODOs
 
 - [ ] Run real voice-note validation (drop an actual Arabic recording and an English one; confirm language detection + transcript quality). *(added: 2026-08-10)*
+- [ ] Commit pending changes (notifications + video + diarization; `HEAD` is `c6a5ea6`). *(added: 2026-08-10)*
+- [ ] Validate diarization on a genuine multi-person recording (auto mode; the screen recording was one person voicing two characters). *(added: 2026-08-10)*
 - [ ] Decide if the model should stay resident between notes (instant transcription, ~3.8 GB RAM) vs idle ~20 MB (restart service to unload). *(added: 2026-08-10)*
-- [ ] Consider `git init` for this project directory. *(added: 2026-08-10)*
 
 ---
 

@@ -11,9 +11,12 @@
 | Framework | none (standalone script) |
 | Transcription | `faster-whisper` — Whisper `large-v3` (multilingual), `device=cpu`, `compute_type=int8` |
 | File watching | `watchdog` 6.0.0 |
-| Audio decode | system `ffmpeg` (n9.0) via faster-whisper |
+| Audio decode | system `ffmpeg` (n9.0) via faster-whisper (also decodes audio track of video files) |
+| Speaker diarization | `pyannote.audio` (speaker-diarization-3.1) + `torch` CPU; audio fed as waveform via PyAV (torchcodec is broken on this system and bypassed) |
+| Notifications | `notify-send` (libnotify / org.freedesktop.Notifications), `kdialog` fallback |
 | Process mgmt | systemd --user unit `voice-transcriber.service` |
 | Package mgmt | `uv` (user-level at `~/.local/bin/uv`) |
+| Version control | git (repo initialized `c6a5ea6`, branch `main`) |
 
 ---
 
@@ -37,4 +40,8 @@
 | Variable | Used In | What It Enables |
 |----------|---------|----------------|
 | `TRANSCRIBER_MODEL` | `transcriber.py` config | Overrides `MODEL_NAME` (default `large-v3`) |
+| `TRANSCRIBER_NOTIFY` | `transcriber.py` config | `0` disables desktop notifications (default enabled) |
+| `TRANSCRIBER_DIARIZE` | `transcriber.py` config | `0` disables speaker diarization (default enabled) |
+| `TRANSCRIBER_SPEAKERS` | `transcriber.py` config | Force speaker count (e.g. `2`) when pyannote undercounts; empty = auto |
+| `HF_TOKEN` | service `EnvironmentFile` | `~/.config/voice-transcriber/hf.env` (`0600`); needed to download gated pyannote models |
 | `PATH` | systemd unit | `/usr/bin:/bin:~/.local/bin` (ffmpeg + uv) |

@@ -13,6 +13,10 @@
 
 - Watch mode ignored files already present when the service started → added `scan_existing()` before starting the observer *(fixed: 2026-08-10)*
 - venv broke after the directory move → recreated with `uv venv --python 3.12` + reinstall *(fixed: 2026-08-10)*
+- Active/large files could be transcribed mid-write (e.g. a screen recording landing in the folder) → stability gate now requires mtime age ≥ 5s AND unchanged size, waiting up to 10 min *(fixed: 2026-08-10)*
+- Move-to-`Completed/` could theoretically re-trigger the watcher → `_schedule` now processes only direct children of the root folder *(fixed: 2026-08-10)*
+- Broken `torchcodec` audio decoder (lib mismatches, needs CUDA `libnvrtc`) → bypassed entirely: audio decoded to a 16 kHz mono waveform via PyAV and fed to the pyannote pipeline as `{'waveform', 'sample_rate'}` *(fixed: 2026-08-10)*
+- pyannote API drift (`Pipeline.from_pretrained(use_auth_token=)` → `token=`; output is now `DiarizeOutput` with `.speaker_diarization`, no longer the bare `Annotation`) → fixed both with a `getattr` compatibility fallback *(fixed: 2026-08-10)*
 
 ---
 
@@ -23,3 +27,7 @@
 - **Python 3.12 via uv** — system Python 3.14 too new for faster-whisper; pinned 3.12.13 in a venv managed by `uv`. *(2026-08-10)*
 - **Watch mode + systemd --user** — auto-start at login, no sudo needed; lazy model load keeps idle RAM at ~20 MB. *(2026-08-10)*
 - **Lazy model load** — model loads on first note, not at service start, to avoid pinning ~3.8 GB RAM permanently. *(2026-08-10)*
+- **Notifications via `notify-send`** — native KDE toasts from the service context, `kdialog` passivepopup fallback, non-fatal, `TRANSCRIBER_NOTIFY=0` to disable. *(2026-08-10)*
+- **Videos transcribed from their audio track** — faster-whisper's ffmpeg decode reads video files' audio; no extra extraction step. *(2026-08-10)*
+- **Speaker diarization via pyannote** — `pyannote/speaker-diarization-3.1` + `pyannote/segmentation-3.0` + `pyannote/speaker-diarization-community-1` (embedding), all gated (HF token at `~/.config/voice-transcriber/hf.env`, `0600`). Labels only appear when >1 distinct voice; same-person characters stay plain (diarization = voice identity, not persona). *(2026-08-10)*
+- **Auto speaker count by default** — `num_speakers=None` lets pyannote estimate; `TRANSCRIBER_SPEAKERS=N` forces it for known meetings. `TRANSCRIBER_DIARIZE=0` disables entirely. *(2026-08-10)*

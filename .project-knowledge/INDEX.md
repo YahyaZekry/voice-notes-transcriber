@@ -2,11 +2,11 @@
 
 > Last updated: 2026-08-10
 > Status: Active (deployed & running)
-> Stack: Python 3.12 + faster-whisper (Whisper large-v3, CPU/int8) + watchdog
-> Current goal: Running in production on the user's desktop; validate with real Arabic + English voice notes.
+> Stack: Python 3.12 + faster-whisper (Whisper large-v3, CPU/int8) + pyannote diarization + watchdog + notify-send
+> Current goal: In production. Diarization live (labels notes when >1 real voice); validate with real Arabic/English notes and a genuine multi-person recording.
 
 ## What This Project Does
-Watches `/mnt/knowledge/Obsidian/Personal/VoiceNotes/`, transcribes new voice notes **locally** (no cloud) with Whisper `large-v3` (Arabic + English auto-detected), writes a Markdown note with YAML frontmatter to `VoiceNotes/Transcriptions/`, then moves the audio to `VoiceNotes/Completed/`.
+Watches `/mnt/knowledge/Obsidian/Personal/VoiceNotes/`, transcribes new voice notes and videos **locally** (no cloud) with Whisper `large-v3` (Arabic + English auto-detected), labels speakers when >1 distinct voice is present, writes a Markdown note with YAML frontmatter to `VoiceNotes/Transcriptions/`, then moves the file to `VoiceNotes/Completed/` — with desktop toasts on found/failed/complete.
 
 ---
 
@@ -19,7 +19,7 @@ Watches `/mnt/knowledge/Obsidian/Personal/VoiceNotes/`, transcribes new voice no
 | `schema.md` | Output note frontmatter contract | Changing the generated note format |
 | `systems.md` | Transcription engine, file watching, service | Touching any subsystem |
 | `features.md` | User-facing features and workflow | Understanding what's built |
-| `integrations.md` | Obsidian vault paths, systemd, HF model cache | Path changes, service changes, model downloads |
+| `integrations.md` | Obsidian vault paths, systemd, HF models + token | Path changes, service changes, model downloads |
 | `roadmap.md` | Known bugs, TODOs, current goal | Starting any task |
 | `history.md` | Fixes, decisions | Debugging, reviewing past decisions |
 | `sessions.md` | Session-by-session log | Reviewing work history |
