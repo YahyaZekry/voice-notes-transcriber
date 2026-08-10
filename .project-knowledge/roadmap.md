@@ -19,7 +19,8 @@ In production. Validate accuracy with real Arabic + English voice notes (the esp
 
 - [ ] Run real voice-note validation (drop an actual Arabic recording and an English one; confirm language detection + transcript quality). *(added: 2026-08-10)*
 - [x] Validate diarization on a genuine multi-person recording (auto mode; the screen recording was one person voicing two characters). *(added: 2026-08-10, done: 2026-08-10)*
-- [ ] Decide if the model should stay resident between notes (instant transcription, ~3.8 GB RAM) vs idle ~20 MB (restart service to unload). *(added: 2026-08-10)*
+- [x] Decide if the model should stay resident between notes (instant transcription, ~3.8 GB RAM) vs idle ~20 MB (restart service to unload). *(added: 2026-08-10, done: 2026-08-10 — keep resident; transcriptions are slow on CPU)*
+- [ ] If diarization quality on fast turn-taking becomes a recurring pain, evaluate an alternative engine (e.g. NVIDIA NeMo). Deliberately parked — pyannote limit verified 2026-08-10. *(added: 2026-08-10)*
 
 ---
 
