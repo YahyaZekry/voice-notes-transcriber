@@ -43,6 +43,7 @@
 
 | Variable | Used In | What It Enables |
 |----------|---------|----------------|
+| `TRANSCRIBER_WATCH_DIR` | `transcriber.py` config | Watch folder (default `~/VoiceNotes`; this deployment pins `/mnt/knowledge/Obsidian/Personal/VoiceNotes` in the systemd unit) |
 | `TRANSCRIBER_MODEL` | `transcriber.py` config | Overrides `MODEL_NAME` (default `large-v3`) |
 | `TRANSCRIBER_NOTIFY` | `transcriber.py` config | `0` disables desktop notifications (default enabled) |
 | `TRANSCRIBER_DIARIZE` | `transcriber.py` config | `0` disables speaker diarization (default enabled) |

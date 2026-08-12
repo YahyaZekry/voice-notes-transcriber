@@ -8,12 +8,12 @@ Runs on the NVIDIA GPU (CUDA, float16).
 
 ## What it does
 
-- Watches `/mnt/knowledge/Obsidian/Personal/VoiceNotes/` for new audio/video files
+- Watches a folder (default `~/VoiceNotes`, override with `TRANSCRIBER_WATCH_DIR`) for new audio/video files
 - Lazy-loads the model (loads on the first note, not at startup)
 - Auto-detects language (Arabic / English / others), VAD filter, word-level timestamps
 - Speaker diarization when >1 distinct voice (labels `**Speaker 1:**`/`**Speaker 2:**` turns)
-- Writes a note like `2026-08-11 1638 - 03 ...md` into `Transcriptions/`
-- Moves the source file to `Completed/`
+- Writes a note like `2026-08-11 1638 - 03 ...md` into `<watch>/Transcriptions/`
+- Moves the source file to `<watch>/Completed/`
 - systemd user service with auto-restart and login start
 
 ## Requirements
@@ -102,12 +102,16 @@ Manual runs:
 
 | Variable | Default | Meaning |
 |----------|---------|---------|
+| `TRANSCRIBER_WATCH_DIR` | `~/VoiceNotes` | watch folder; `Transcriptions/` + `Completed/` are created inside it |
 | `TRANSCRIBER_MODEL` | `large-v3` | faster-whisper model |
 | `TRANSCRIBER_NOTIFY` | `1` | `0` disables desktop notifications |
 | `TRANSCRIBER_DIARIZE` | `1` | `0` disables speaker diarization |
 | `TRANSCRIBER_SPEAKERS` | empty | force speaker count (e.g. `2`); empty = auto |
 
 Set them in the systemd unit (`Environment=...`) or as `EnvironmentFile` lines.
+There is **nothing hardcoded** in the code — every path is configurable, so the
+script is reusable as-is: pick any watch folder, any model, notifications and
+diarization off if you want pure silent transcription.
 
 ## Output format
 

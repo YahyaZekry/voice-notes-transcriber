@@ -23,7 +23,7 @@ from pathlib import Path
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-VOICE_DIR = Path("/mnt/knowledge/Obsidian/Personal/VoiceNotes")
+VOICE_DIR = Path(os.environ.get("TRANSCRIBER_WATCH_DIR", "~/VoiceNotes")).expanduser()
 COMPLETED_DIR = VOICE_DIR / "Completed"
 OUTPUT_DIR = VOICE_DIR / "Transcriptions"
 EXTENSIONS = {
