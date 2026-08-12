@@ -1,17 +1,17 @@
 # Voice Notes Transcriber
 
-Local, private Whisper transcription for Obsidian voice notes.
+I have ideas all the time — the good ones always hit while I'm walking, driving, or about to fall asleep. So I record them as voice notes on my phone. And then they pile up: dozens of recordings I never open again, because digging through a list of audio files is the last thing I feel like doing when I actually want to *use* an idea.
 
-Watches `VoiceNotes/`, transcribes new recordings **on this machine** (no cloud) with Whisper `large-v3` — Arabic + English auto-detected — labels speakers with pyannote diarization, writes a Markdown note with YAML frontmatter into `VoiceNotes/Transcriptions/`, then moves the audio to `VoiceNotes/Completed/`. Desktop toast on found / failed / complete.
+This project closes that gap. I drop a recording into a folder and it comes out the other side as a real Obsidian note — transcribed, searchable, editable, ready to turn into whatever it was meant to be. Same for videos I like: instead of keeping them around "to get back to someday", they become written notes I can actually work with.
 
-Runs on the NVIDIA GPU (CUDA, float16).
+It runs entirely **locally** on my machine — nothing leaves my computer, and it runs on my NVIDIA GPU.
 
 ## What it does
 
 - Watches a folder (default `~/VoiceNotes`, override with `TRANSCRIBER_WATCH_DIR`) for new audio/video files
 - Lazy-loads the model (loads on the first note, not at startup)
 - Auto-detects language (Arabic / English / others), VAD filter, word-level timestamps
-- Speaker diarization when >1 distinct voice (labels `**Speaker 1:**`/`**Speaker 2:**` turns)
+- Speaker diarization when >1 distinct voice (labels `**Speaker 1:**`/`**Speaker 2:**` turns — useful for interviews and conversations I record)
 - Writes a note like `2026-08-11 1638 - 03 ...md` into `<watch>/Transcriptions/`
 - Moves the source file to `<watch>/Completed/`
 - systemd user service with auto-restart and login start
@@ -85,11 +85,12 @@ systemctl --user daemon-reload
 systemctl --user enable --now voice-transcriber.service
 ```
 
-## Usage
+## How I use it
 
-Drop a recording (`.ogg .m4a .mp3 .wav .flac .aac .opus .mp4 .mkv ...`) into the
-watch folder. The note appears in `Transcriptions/` and the file moves to
-`Completed/`.
+I record on my phone, the file lands in the watch folder (synced via my vault),
+and a while later there's a note in `Transcriptions/` waiting for me. I edit it,
+link it, act on it. The source audio moves to `Completed/` so my watch folder
+never fills up.
 
 Manual runs:
 
