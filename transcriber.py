@@ -31,8 +31,8 @@ EXTENSIONS = {
     ".webm", ".mp4", ".mkv", ".mov", ".avi", ".m4v", ".ts", ".3gp",
 }
 MODEL_NAME = os.environ.get("TRANSCRIBER_MODEL", "large-v3")
-DEVICE = "cpu"
-COMPUTE_TYPE = "int8"
+DEVICE = "cuda"
+COMPUTE_TYPE = "float16"
 SCAN_INTERVAL = 5.0
 MIN_AGE = 5.0
 STABILITY_DELAY = 2.0
@@ -93,6 +93,9 @@ class Transcriber:
                 "pyannote/speaker-diarization-3.1",
                 token=HF_TOKEN or None,
             )
+            import torch
+
+            self.diarization.to(torch.device(DEVICE))
             log.info("Diarization ready.")
         return self.diarization
 
@@ -137,7 +140,17 @@ class Transcriber:
                         text = labeled
             except Exception:
                 log.exception("Diarization failed — using plain transcript")
+            self._release_diarization()
         return text, info.language, info.duration, speakers
+
+    def _release_diarization(self):
+        if self.diarization is None:
+            return
+        import torch
+
+        self.diarization.to(torch.device("cpu"))
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     def _diarize(
         self, path: Path, num_speakers: int | None = None
@@ -167,9 +180,12 @@ class Transcriber:
     def _diarize_turns(
         self, pipeline, waveform, num_speakers: int | None = None
     ) -> list[tuple[float, float, str]]:
+        import torch
+
+        pipeline.to(torch.device(DEVICE))
         kwargs = {"num_speakers": num_speakers} if num_speakers else {}
         output = pipeline(
-            {"waveform": waveform.unsqueeze(0), "sample_rate": 16000},
+            {"waveform": waveform.unsqueeze(0).to(torch.device(DEVICE)), "sample_rate": 16000},
             **kwargs,
         )
         diarization = getattr(output, "speaker_diarization", output)
