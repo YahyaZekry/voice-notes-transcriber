@@ -1,12 +1,12 @@
 # Voice Notes Transcriber — Knowledge Index
 
-> Last updated: 2026-08-10
-> Status: Active (deployed & running)
-> Stack: Python 3.12 + faster-whisper (Whisper large-v3, CPU/int8) + pyannote diarization + watchdog + notify-send
-> Current goal: In production. Diarization live (labels notes when >1 real voice); validate with real Arabic/English notes and a genuine multi-person recording.
+> Last updated: 2026-08-11
+> Status: Active (deployed & running on GPU)
+> Stack: Python 3.12 + faster-whisper (Whisper large-v3, CUDA/float16) + pyannote diarization + watchdog + notify-send
+> Current goal: In production on GPU. Diarization validated on a real 4-note Arabic batch (2–3 speakers); watch mode live.
 
 ## What This Project Does
-Watches `/mnt/knowledge/Obsidian/Personal/VoiceNotes/`, transcribes new voice notes and videos **locally** (no cloud) with Whisper `large-v3` (Arabic + English auto-detected), labels speakers when >1 distinct voice is present, writes a Markdown note with YAML frontmatter to `VoiceNotes/Transcriptions/`, then moves the file to `VoiceNotes/Completed/` — with desktop toasts on found/failed/complete.
+Watches `/mnt/knowledge/Obsidian/Personal/VoiceNotes/`, transcribes new voice notes and videos **locally** (no cloud) with Whisper `large-v3` (Arabic + English auto-detected) on the NVIDIA GPU (CUDA, float16), labels speakers when >1 distinct voice is present, writes a Markdown note with YAML frontmatter to `VoiceNotes/Transcriptions/`, then moves the file to `VoiceNotes/Completed/` — with desktop toasts on found/failed/complete.
 
 ---
 
