@@ -44,6 +44,7 @@ HF_TOKEN = os.environ.get("HF_TOKEN", "")
 MIN_PROBE_SPEECH = 10.0   # total speech (s) below which we never probe for a 2nd speaker
 PROBE_MIN_FRACTION = 0.10  # probed 2nd speaker must hold >= this share of speech time
 PROBE_MIN_SECONDS = 4.0    # ... and at least this many seconds of speech
+SAME_VOICE_COSINE_THRESHOLD = 0.75  # cluster centroid sim above this => same voice (reject split)
 
 log = logging.getLogger("voice-transcriber")
 
@@ -166,16 +167,68 @@ class Transcriber:
         waveform = self._load_waveform(path)
         turns = self._diarize_turns(pipeline, waveform)
         speech = sum(t[1] - t[0] for t in turns)
-        if len({t[2] for t in turns}) <= 1 and speech >= MIN_PROBE_SPEECH:
+        distinct = {t[2] for t in turns}
+        if len(distinct) <= 1 and speech >= MIN_PROBE_SPEECH:
             probe = self._diarize_turns(pipeline, waveform, 2)
             labels: dict[str, float] = {}
             for start, end, spk in probe:
                 labels[spk] = labels.get(spk, 0.0) + (end - start)
-            if len(labels) == 2:
-                minority = min(labels.values())
-                if minority >= PROBE_MIN_FRACTION * sum(labels.values()) and minority >= PROBE_MIN_SECONDS:
-                    return probe
+            if (
+                len(labels) == 2
+                and min(labels.values())
+                >= PROBE_MIN_FRACTION * sum(labels.values())
+                and min(labels.values()) >= PROBE_MIN_SECONDS
+                and self._clusters_distinct(waveform, probe)
+            ):
+                return probe
+        elif len(distinct) == 2 and not self._clusters_distinct(waveform, turns):
+            # auto mode found 2 speakers but they sound identical — collapse to one
+            return [(s, e, "SPEAKER_00") for s, e, _ in turns]
         return turns
+
+    def _clusters_distinct(
+        self, waveform, turns: list[tuple[float, float, str]]
+    ) -> bool:
+        """True if the two speaker clusters in ``turns`` are genuinely different voices.
+
+        Embeds each speaker's turns with the pipeline's speaker-embedding model and
+        compares cluster centroids by cosine similarity. A monologue force-split into
+        2 speakers scores ~0.96 (same voice); genuinely different speakers score
+        well below 0.75. Any failure falls back to accepting the split (backward
+        compatible with the previous behaviour).
+        """
+        import numpy as np
+        import torch
+        from pyannote.audio.pipelines.speaker_verification import PretrainedSpeakerEmbedding
+
+        speakers = sorted({t[2] for t in turns})
+        if len(speakers) < 2:
+            return False
+        try:
+            embedding = PretrainedSpeakerEmbedding(
+                self.diarization.embedding, device=torch.device(DEVICE)
+            )
+            centroids: dict[str, np.ndarray] = {}
+            for spk in speakers[:2]:
+                chunks = [
+                    waveform[int(start * 16000):int(end * 16000)]
+                    for start, end, sp in turns
+                    if sp == spk
+                ]
+                if not chunks or sum(c.numel() for c in chunks) < 16000 * 2:
+                    # too little speech to judge — accept the split
+                    return True
+                wav = torch.cat(chunks).unsqueeze(0).unsqueeze(1)
+                centroids[spk] = embedding(wav)[0]
+                centroids[spk] /= np.linalg.norm(centroids[spk])
+            sim = float(centroids[speakers[0]] @ centroids[speakers[1]])
+            log.info("cluster similarity for %d speakers: %.3f", len(speakers), sim)
+            return sim < SAME_VOICE_COSINE_THRESHOLD
+        except Exception:
+            log.exception("Speaker-embedding verification failed — accepting split")
+            return True
+        finally:
+            self._release_diarization()
 
     def _diarize_turns(
         self, pipeline, waveform, num_speakers: int | None = None

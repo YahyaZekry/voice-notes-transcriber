@@ -11,6 +11,7 @@
 
 ## Fixed
 
+- **Speaker 1/Speaker 2 labels on single-speaker recordings** — pyannote force-splits monologues: with `num_speakers=2` it alternates between two arbitrary clusters on one voice (verified: a 31s single-voice clip → probe split → cluster centroid cosine sim **0.962**; a real 2-voice clip → **0.162**). Fix: `_clusters_distinct()` embeds each cluster's audio via the pipeline's wespeaker embedding model (`PretrainedSpeakerEmbedding`) and compares L2-normalized centroid cosine similarity; the probe is accepted only when sim < **0.75**, and auto mode's own 2-speaker results above the threshold are collapsed back to 1. Verified: monologue→1 speaker, balanced 2-voice→2, dominant+≥4s minority→2 (probe path still works). *(fixed: 2026-08-12)*
 - Watch mode ignored files already present when the service started → added `scan_existing()` before starting the observer *(fixed: 2026-08-10)*
 - venv broke after the directory move → recreated with `uv venv --python 3.12` + reinstall *(fixed: 2026-08-10)*
 - Active/large files could be transcribed mid-write (e.g. a screen recording landing in the folder) → stability gate now requires mtime age ≥ 5s AND unchanged size, waiting up to 10 min *(fixed: 2026-08-10)*
